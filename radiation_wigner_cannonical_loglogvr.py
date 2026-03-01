@@ -34,10 +34,18 @@ blackhole = 80
 data0 = np.linspace(0.1, 10.5, 200)
 print(data0)
 
+# NOTE (meaning): in this "vr" plot, the x-axis is r (not D). The numerical files loaded below
+# are expected to store rows [r, N] where N is the computed negativity-like quantity.
+# The analytic curve plotted at the end is N(r)=erf(sqrt(r))+exp(-r)/sqrt(pi r), matching
+# main.tex Eq.(neg). This comparison is only valid if the generator script computed r in a way
+# consistent with r=e^{S_2}/(2D) (or the appropriate ensemble variant) and used the same Wigner
+# normalization convention as main.tex.
+
 mu = 30
 beta = 0.1
 data = np.load(f"subadd/radiation_wigner/cannonical/D={blackhole}beta={beta}mu={mu}cannonical2_num.npy")
 data_ana = np.load(f"subadd/radiation_wigner/cannonical/D={blackhole}beta={beta}mu={mu}cannonical_ana2.npy")
+# data[:,0] is r, data[:,1] is the estimated negativity.
 plt.loglog(data[:, 0][1:], data[:, 1][1:], '.', color='C0', label=rf"$~\mu={mu},~\beta={beta}$")
 data1 = data[:, 0][1:]
 #plt.loglog(data_ana[:, 0], data_ana[:, 1], '-', color='C1', label=rf"Analyticalcal,$~\beta={beta}$")

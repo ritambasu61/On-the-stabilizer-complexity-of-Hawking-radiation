@@ -25,6 +25,13 @@ blackhole = 80
 # Load  data
 # -----------------------------
 
+# NOTE (normalization): this plotting script assumes the numerical data saved by
+# radiation_wigner_cannonical.py is directly comparable to the analytic curve
+# N(r)=erf(sqrt(r))+exp(-r)/sqrt(pi r) from main.tex Eq.(neg). This requires that the
+# Wigner function normalization used in the generator script matches main.tex, where
+# W(q,p)=(1/D)Tr(\rho A(q,p)), and that the mapping used there for
+# r (e.g., r = z1pbyz22p*blackhole/(2*k)) is the intended identification with r=e^{S_2}/(2D).
+
 '''
 beta = 0.01
 data = np.load(f'subadd/radiation_wigner/cannonical/D={blackhole}beta={beta}mu={mu}cannonical_num.npy')
@@ -36,6 +43,8 @@ plt.loglog(data_ana[:, 0], data_ana[:, 1], '-', color='C1', label=rf"Analyticalc
 beta = 0.5
 data = np.load(f"subadd/radiation_wigner/cannonical/D={blackhole}beta={beta}mu={mu}cannonical_num.npy")
 data_ana = np.load(f"subadd/radiation_wigner/cannonical/D={blackhole}beta={beta}mu={mu}cannonical_ana.npy")
+# data[:,0] is the radiation dimension D (prime k), data[:,1] is the estimated negativity.
+# data_ana is the analytic prediction evaluated using the same inferred r as in the generator.
 plt.loglog(data[:, 0], data[:, 1], '.', color='C0', label=rf"Numerical,$~\beta={beta}$")
 plt.loglog(data_ana[:, 0], data_ana[:, 1], '-', color='C1', label=rf"Analytical,$~\beta={beta}$")
 

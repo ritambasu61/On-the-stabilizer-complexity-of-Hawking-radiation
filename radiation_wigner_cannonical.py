@@ -40,6 +40,9 @@ def Generate_GUE(n, rng=None):
     if rng is None:
         rng = np.random.default_rng()
     # real/imag entries ~ N(0, 0.5 / sqrt(n)) to get Wigner scaling
+    # NOTE (convention): other scripts in this repo sometimes use a different scaling (e.g.
+    # scale=1/sqrt(n)). Mixing conventions changes the spectrum scale and effectively rescales
+    # parameters like beta, mu-dependent weights, and any fitted comparison to analytic curves.
     scale = 0.5 / np.sqrt(n)
     Lambda_real = rng.normal(loc=0.0, scale=scale, size=(n, n))
     Lambda_im   = rng.normal(loc=0.0, scale=scale, size=(n, n))
@@ -52,6 +55,9 @@ alpha = np.e**12 / (16 * np.pi**2)
 
 def f(x):
     # x expected in [-1, 1]; be mindful of domain
+    # NOTE (domain): eigenvalues of a GUE matrix are not guaranteed to lie in [-1,1] unless you
+    # explicitly rescale/clamp. If |x|>1 then sqrt(1-x^2) becomes complex and this map may no
+    # longer represent the intended real-valued transformation.
     return (8 * np.pi * alpha * (0.5 * x * np.sqrt(1 - x**2) + (np.pi / 2) - np.arctan(np.sqrt(1 - x**2) / (1 + x))))
 
 def g(x):
@@ -82,6 +88,12 @@ def _wigner_entry_vectorized(i, j):
     phase = np.exp(4j * np.pi * j * (l - i) / k)
     s = np.sum(rho[lp, l] * phase)
     return float(np.abs(s) / k)
+
+# NOTE (normalization vs main.tex): main.tex defines Wigner as W(q,p)=(1/D)Tr(rho A(q,p)) where
+# A(q,p)=sum delta_hat * exp(...) |k><l|. Here the code computes |Tr(A rho)|/k and then sums
+# over all phase-space points. This matches the structure of \sum_{q,p}|W(q,p)| up to the overall
+# normalization absorbed into how rho_radiation is constructed from overlaps. If you compare to
+# analytic formulas, ensure your rho normalization corresponds to Eq. (rho_R) in main.tex.
 
 def _worker(arg):
     i, j = arg
@@ -122,6 +134,10 @@ for a in range(blackhole):
         # root-finding; domain of x for your model—kept guess=3.0 as in original
         root = fsolve(fg, 3.0)[0]
         eigenval2_list.append(root)
+
+# NOTE (bug risk): if 0 < len(eigenval2_list) < blackhole, then eigenval2 will be smaller than
+# (blackhole x blackhole) and the recomposition below (eigenvec^† @ eigenval2 @ eigenvec) will
+# have a dimension mismatch. Current fallback only handles the len==0 case.
 
 if len(eigenval2_list) == 0:
     # fall back: if no eigenvalue passed the filter, keep original real parts
@@ -179,6 +195,11 @@ if __name__ == "__main__":
                 if norm == 0:
                     return s
                 return s / np.sqrt(np.abs(norm))
+
+            # NOTE (consistency): psi(i) uses sqrt(-2*eigenval[a]) in the gamma argument and
+            # exp(-beta*eigenval[a]/2). Later, zprime() uses sqrt(-eigenval[a]) and exp(-beta*eigenval[a]).
+            # If zprime is intended to represent Z1/Z2-type quantities (hence r), these factor-of-2
+            # differences can shift the inferred r and spoil strict agreement with the analytic curve.
 
             # --- 3) Build radiation density matrix rho_radiation ---
             # rho = (1/k) * sum_{i,j} <psi(i)|psi(j)> |j><i|
