@@ -18,17 +18,19 @@ dt = 0.01
 num_processes = 10  # Use  available CPUs
 data = []
 
-
-
+# NOTE (physics): when db=1 the "black hole" subsystem is 1-dimensional, so the full state
+# is effectively just the radiation state evolving unitarily. The partial trace over B is
+# then trivial, and there is no nontrivial B-R entanglement dynamics to study.
 
 begin=tim.time()#this is for calculating the time to run the code(can be ignored)
-
 
 def Generate_GUE(n):
     """Creates nxn GUE"""
     i = complex(0,1)
     Lambda_real = np.random.normal(scale=1/np.sqrt(n),size=[n,n])
     Lambda_im = np.random.normal(scale=1/np.sqrt(n),size=[n,n])
+    # NOTE (convention): other scripts in this repo may use a different prefactor (e.g. 0.5/sqrt(n)).
+    # Keep this consistent across scripts if you compare spectra-dependent quantities.
     Lambda = Lambda_real + Lambda_im * i
     G = (Lambda+Lambda.T.conjugate())/2
     return G
@@ -41,6 +43,7 @@ def Generate_GUE(n):
 #Hr = Generate_GUE(dr)
 #Hkk = np.kron(Hb, Hr)
 Hkk = Generate_GUE(db*dr)
+# NOTE (paths): this is a hard-coded absolute Linux path. Update to a valid location on your machine.
 np.save('/home/ritam.basu/Desktop/hh_coordinate/hkk_Db=' + str(db) + 'Dr=' + str(dr) + '.npy', Hkk) #just copy-paste the path where you want to save the random Hamiltonian
 print('Hamiltonian')
 
@@ -51,6 +54,8 @@ Kryk = np.identity(dr, dtype=np.complex128)
 
 
 def Ua(t):
+    # NOTE (time scaling): the extra factor sqrt(dr*db) rescales the Hamiltonian norm and therefore
+    # changes the effective time scale. Keep this consistent with any analytic comparison.
     return expm(-1j * t * Hkk * np.sqrt(dr * db))  # Time evolution operator
 
 
@@ -100,6 +105,11 @@ def Akk(a1, a2, dr, Kryk):
             result += fact * np.outer(Kryk[lp], Kryk[l].conj().T)
     return result
 
+# NOTE (performance): as written, Akk is O(dr^2) to construct.
+# In parallel_wsykenkk() we build Akk for every (x,y) in phase space (dr^2 points), so the
+# total cost per time step is O(dr^4). This becomes very slow already for dr ~ 100.
+# You can reduce this by using the constraint (l+lp)=2a1 mod dr to eliminate the lp loop:
+# lp = (2*a1 - l) mod dr, turning Akk-related traces into a single O(dr) sum.
 
 
 
@@ -143,6 +153,7 @@ if __name__ == "__main__":
     
 # Save results
 Data = np.array(data)
+# NOTE (paths): this is a hard-coded absolute Linux path. Update to a valid location on your machine.
 np.save('/home/ritam.basu/Desktop/hh_coordinate/Db=' + str(db) + 'Dr=' + str(dr) + '.npy', Data) #just copy-paste the path where you want to save the data
 
 
@@ -155,6 +166,5 @@ print((end-begin)/60)
 # Plot results
 plt.plot(Data[:, 0], Data[:, 1], '.-', label='db=' + str(db))
 plt.legend(loc='upper left', frameon=True, fontsize=8.0)
+# NOTE (paths): this is a hard-coded absolute Linux path. Update to a valid location on your machine.
 plt.savefig('/home/ritam.basu/Desktop/hh_coordinate/Db=' + str(db) + 'Dr=' + str(dr) + '.pdf')#just copy-paste the path where you want to save the plot
-
-

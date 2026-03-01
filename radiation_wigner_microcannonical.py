@@ -46,6 +46,12 @@ def build_rho_radiation(k, c, blackhole):
     According to your original definition:
         rho[j, i] = (1/k) * vdot( s_i, s_j )  where s_i are normalized rows (length blackhole)
     This implementation computes that matrix without Python loops.
+
+    NOTE (normalization vs main.tex): in main.tex the reduced radiation state is
+      rho_R = (1/(D e^{S0} Z1)) * sum_{i,j} <psi_i|psi_j> |j><i|.
+    Here we work with a simplified/normalized overlap model where rho is built from normalized
+    random rows s_i and the prefactor is (1/k). If you compare directly to analytic formulas for
+    negativity, ensure that the overall normalization conventions match.
     """
     # c is (k, blackhole); normalize rows
     s = psi_row_normalized_matrix(c)  # shape (k, blackhole)
@@ -79,6 +85,9 @@ def worker_for_i(i):
     """
     Worker computes sum_{j=0..k-1} |trace(Akk(i,j) @ rho)| / k
     Uses global _RHO and _K set in pool initializer.
+
+    NOTE (meaning): summing over i and j yields sum_{q,p} |W(q,p)| with W(q,p) = (1/k)Tr(rho A(q,p))
+    under the standard discrete phase-point operator definition (see main.tex Eq. for A(q,p)).
     """
     global _RHO, _K
     k = _K

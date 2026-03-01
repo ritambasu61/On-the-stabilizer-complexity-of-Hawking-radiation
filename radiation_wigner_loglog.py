@@ -46,6 +46,10 @@ nn=1
 
 blackhole=80
 x = np.load(f'subadd/radiation_wigner/D={blackhole}.npy')
+# NOTE (data meaning): this file is expected to contain pairs [D, N] where N is the computed
+# Wigner negativity-like quantity \sum_{q,p} |W(q,p)| for a k-dimensional (prime) radiation space.
+# Ensure the normalization of W(q,p) used to generate this .npy matches the convention used in
+# main.tex, where W(q,p)=(1/D)Tr(\rho A(q,p)).
 plt.loglog(x[0:, 0], x[0:, 1],'.', label=r'$Numerical$', color=cls[0], lw=lwd)
 ymax=np.max(x[0:,1])
 print(x)
@@ -61,6 +65,13 @@ def neg(k):
 	return(   1+(8*k**2*(1/np.sqrt(2*np.pi*ff(k)))*np.exp(g(k))/(blackhole*f(k)))  )
 def negs(k):
 	return( ((2*k/(np.pi*blackhole))**0.5*np.exp(-blackhole/(2*k)))+   erf(np.sqrt(blackhole/(2*k)))  )
+
+# NOTE (analytic curve): negs(k) is of the form
+#   N(r) = erf(sqrt(r)) + exp(-r)/sqrt(pi r)
+# with r = blackhole/(2*k) in this microcanonical toy model.
+# Compare with main.tex Eq.(neg), where r = e^{S_2}/(2D) (or related variants depending on ensemble).
+# Be careful: if blackhole is not exactly the quantity playing the role of e^{S_2} in your setup,
+# this identification of r can shift the curve.
 
 x=np.arange(1,10**3,50)
 plt.loglog(x,((2*x)/(np.pi*blackhole))**0.5,'.-', label=r'$\sqrt{\frac{2 D}{\pi e^{S_0}}}$', color='r', lw=lwd)
